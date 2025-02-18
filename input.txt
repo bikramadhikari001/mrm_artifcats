@@ -1,0 +1,13 @@
+Model Development Notebook (or similar): Instead of a formal "Model Documentation," the initial deliverable is likely a Jupyter Notebook (or similar), containing the code, data exploration, model training, and initial results. This provides a much more transparent view of the development process.
+
+Data Sample & Source Information: A representative sample of the data used, along with clear metadata describing the source, any pre-processing steps, and potential biases. The entire dataset is rarely shared directly due to size and security concerns.
+
+Model Summary Report (Informal): A concise summary of the model's purpose, key features, and preliminary performance metrics. This is less of a formal report and more of a high-level overview to inform the MRM team quickly.
+
+Model Version & Code Repository Access: Access to the version-controlled code repository (e.g., Git) rather than a static code file. This allows MRM to track changes, inspect intermediate versions, and understand the evolution of the model.
+
+Performance Metrics (Early Iteration): Preliminary performance metrics, often visualized rather than just presented numerically, highlighting areas of strength and weakness.
+
+Initial list of Assumptions and Limitations: An informal but clear list of the model's core assumptions and known limitations, as these are identified during the development process. This list will be refined as MRM progresses.
+
+Key Preprocessing Steps Description: Concise description of important data cleaning and transformation steps, especially those that could introduce bias or have a significant impact on results.
