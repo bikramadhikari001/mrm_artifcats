@@ -1,99 +1,124 @@
-# Lending Club Data Sample Metadata
+# Data Transformation Documentation
 
-## Data Source
-- Source: Lending Club Historical Loan Data
-- Time Period: 2007-2018
-- Sample Size: Representative sample of 10,000 loans
-- Data Format: CSV
-- Original Source URL: https://www.lendingclub.com/info/download-data.action
+This document details the transformations applied to convert the raw Lending Club data into the golden dataset used for model training.
 
-## Key Features
+## Dataset Overview
 
-### Target Variable
-- `loan_status`: Binary indicator (Default/Non-Default)
-  - Default defined as: Charged Off, Default, or Late (>120 days)
-  - Non-Default: Fully Paid or Current
+- Raw Dataset: `lending_club_raw_data.csv` (300 samples)
+- Golden Dataset: `lending_club_golden_data.csv` (300 samples)
 
-### Primary Features
-1. **Borrower Information**
-   - Annual Income
-   - Employment Length
-   - Home Ownership
-   - Debt-to-Income Ratio
-   - FICO Score Range
+## Transformations Applied
 
-2. **Loan Characteristics**
-   - Loan Amount
-   - Interest Rate
-   - Term (36/60 months)
-   - Grade and Sub-grade
-   - Purpose
+### 1. FICO Score Categorization
+```python
+# Convert numeric FICO scores to risk categories
+df['fico_category'] = pd.cut(
+    df['fico_score'], 
+    bins=[0, 580, 670, 740, 800, 850],
+    labels=['Very Poor', 'Fair', 'Good', 'Very Good', 'Excellent']
+)
+```
+Rationale:
+- Industry-standard FICO score ranges
+- Makes risk levels more interpretable
+- Helps identify non-linear relationships
 
-3. **Credit History**
-   - Number of Credit Lines
-   - Revolving Credit Balance
-   - Credit Utilization
-   - Recent Inquiries
-   - Delinquency History
+### 2. Debt-to-Income (DTI) Bucketing
+```python
+# Convert continuous DTI to risk buckets
+df['dti_category'] = pd.cut(
+    df['dti'],
+    bins=[0, 10, 20, 30, 40, float('inf')],
+    labels=['Very Low', 'Low', 'Moderate', 'High', 'Very High']
+)
+```
+Rationale:
+- Standard industry thresholds for DTI risk assessment
+- Captures risk levels more effectively than raw ratios
+- Aligns with underwriting guidelines
 
-## Data Quality Considerations
+### 3. Log Transformations
+```python
+# Apply log transformation to handle skewed distributions
+df['log_income'] = np.log1p(df['annual_income'])
+df['log_loan_amount'] = np.log1p(df['loan_amount'])
+```
+Rationale:
+- Normalizes heavily skewed financial data
+- Reduces impact of outliers
+- Improves model performance with normalized distributions
 
-### Missing Values
-- Employment Length: ~3% missing
-- Debt-to-Income: ~0.5% missing
-- Revolving Credit Balance: ~0.1% missing
+## Data Quality Checks
 
-### Known Biases
-1. **Selection Bias**
-   - Data only includes approved loans
-   - No information on rejected applications
+### Raw Data Validation
+- No missing values in critical fields (FICO, DTI)
+- All loan amounts > 0
+- All annual incomes > 0
+- DTI ratios <= 150%
 
-2. **Temporal Bias**
-   - Economic conditions vary across time period
-   - COVID-19 period not represented
+### Golden Data Validation
+- All categorical features properly encoded
+- No missing values in engineered features
+- Log transformations successfully applied
+- Categories match expected distributions
 
-3. **Geographic Bias**
-   - Over-representation of urban areas
-   - State-level lending restrictions impact data availability
+## Feature Distributions
 
-## Preprocessing Steps
+### Raw Features
+- FICO Scores: Range 580-850, mean ~700
+- DTI: Range 0-150%, mean ~25%
+- Annual Income: Range $20k-$300k
+- Loan Amount: Range $1k-$40k
 
-1. **Data Cleaning**
-   - Remove loans with missing FICO scores
-   - Handle missing employment length with mode imputation
-   - Remove loans with invalid debt-to-income ratios (>150%)
+### Engineered Features
+- FICO Categories: 5 risk levels
+- DTI Categories: 5 risk levels
+- Log Income: Normalized distribution
+- Log Loan Amount: Normalized distribution
 
-2. **Feature Engineering**
-   - Credit score binning (50-point ranges)
-   - Employment length categorization
-   - Debt-to-income ratio bucketing
-   - Purpose category consolidation
+## Usage Notes
 
-3. **Data Transformation**
-   - Log transformation of income and loan amount
-   - Standard scaling of numeric features
-   - One-hot encoding of categorical variables
+### For Model Training
+- Use golden dataset features
+- Categorical features require one-hot encoding
+- Numeric features should be scaled
+- Target variable: loan_status (Default/Fully Paid)
 
-## Data Security & Privacy
-- All PII (Personal Identifiable Information) removed
-- ZIP codes aggregated to state level
-- Income values rounded to nearest thousand
-- Exact FICO scores converted to ranges
+### For Inference
+1. Apply same transformations to new data:
+   - FICO categorization
+   - DTI bucketing
+   - Log transformations
+2. Validate transformed features match training distributions
+3. Scale numeric features using training scaler
 
-## Sampling Strategy
-- Stratified sampling based on:
-  1. Loan status (maintain default rate)
-  2. Time period (ensure temporal representation)
-  3. Loan grade (maintain risk distribution)
-  4. Geographic distribution
+## Monitoring Considerations
 
-## Data Update Frequency
-- Historical data snapshot as of December 2018
-- Quarterly updates for model monitoring
-- Monthly performance tracking for active loans
+### Data Drift Monitoring
+- Track raw feature distributions
+- Monitor category proportions
+- Alert on significant distribution shifts
 
-## Usage Restrictions
-- Not for commercial use
-- Internal model development only
-- No sharing with external parties
-- Subject to Lending Club terms of service
+### Data Quality Monitoring
+- Validate transformation outputs
+- Check for unexpected categories
+- Monitor missing value patterns
+
+## Version Control
+
+- Transformation code version: 1.0
+- Last updated: February 2025
+- Changes tracked in Git repository
+
+## Dependencies
+
+- Python 3.8+
+- pandas
+- numpy
+- scikit-learn (for scaling)
+
+## Contact
+
+For questions about data transformations:
+- Data Engineering Team
+- Model Development Team
