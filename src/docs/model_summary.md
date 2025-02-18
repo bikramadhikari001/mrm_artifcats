@@ -5,12 +5,7 @@
 - **Purpose**: Predict probability of loan default for credit decisioning
 - **Target Variable**: Binary (Default/Non-Default)
 - **Primary Use Case**: Automated credit risk assessment for personal loans
-
-## Business Context
-- Support Lending Club's automated underwriting process
-- Reduce manual review workload
-- Standardize credit risk assessment
-- Enable risk-based pricing
+- **Data Size**: 300 samples
 
 ## Model Architecture
 - **Algorithm**: Gradient Boosting Decision Trees
@@ -20,77 +15,92 @@
   - max_depth: 5
   - learning_rate: 0.1
   - min_samples_split: 200
+  - random_state: 42
 
-## Feature Importance
-Top 10 predictive features:
-1. FICO Score
-2. Debt-to-Income Ratio
-3. Annual Income
-4. Credit Utilization
-5. Employment Length
-6. Loan Amount
-7. Number of Credit Lines
-8. Recent Inquiries
-9. Loan Purpose
-10. Home Ownership
+## Features Used
 
-## Performance Metrics
-- **ROC-AUC**: 0.85
-- **Precision**: 0.72
-- **Recall**: 0.68
-- **F1 Score**: 0.70
-- **Gini Coefficient**: 0.70
+### Numeric Features
+- Log-transformed Annual Income
+- Log-transformed Loan Amount
+- Debt-to-Income Ratio
+- FICO Score
 
-## Model Validation Results
-- **Out-of-Time Performance**: ROC-AUC = 0.83
-- **Population Stability Index**: 0.12
-- **Feature Drift**: All features PSI < 0.2
-- **Demographic Parity**: Relative difference < 10%
+### Categorical Features
+- Term (36/60 months)
+- Grade (A-G)
+- Home Ownership (RENT/MORTGAGE/OWN)
+- Loan Purpose
+- FICO Category (Very Poor/Fair/Good/Very Good/Excellent)
+- DTI Category (Very Low/Low/Moderate/High/Very High)
 
-## Key Assumptions
-1. Historical default patterns remain relevant
-2. Feature relationships remain stable
-3. Economic conditions similar to training period
-4. Data quality remains consistent
-5. No major policy changes in lending criteria
+## Feature Engineering
+1. **Log Transformations**:
+   - Applied to annual_income to handle income distribution skew
+   - Applied to loan_amount to normalize loan size distribution
 
-## Known Limitations
-1. Limited to approved loan applications
-2. May not capture new fraud patterns
-3. Sensitive to macroeconomic changes
-4. Geographic coverage gaps
-5. Limited history for new credit users
+2. **Categorical Binning**:
+   - FICO scores binned into risk categories
+   - DTI ratios binned into risk levels
 
-## Monitoring Plan
-- **Daily**: Performance tracking dashboard
-- **Weekly**: Population stability monitoring
-- **Monthly**: Full model performance review
-- **Quarterly**: Bias and fairness assessment
+3. **Feature Scaling**:
+   - Standard scaling applied to all numeric features
+   - One-hot encoding for categorical features
 
-## Risk Mitigation
-1. Conservative threshold setting
-2. Manual review for high-risk cases
-3. Regular model retraining
-4. Automated monitoring alerts
-5. Backup scoring system
+## Data Processing
+- Missing values handled in employment length
+- Invalid records removed (DTI > 150, income ≤ 0, loan amount ≤ 0)
+- 80/20 train-test split with random_state=42
+
+## Model Training
+- Training samples: 240 (80%)
+- Test samples: 60 (20%)
+- Features after one-hot encoding: Numeric (4) + Categorical one-hot features
+- Target: loan_status (Default=1, Fully Paid=0)
+
+## Model Validation
+- Random split validation (no time-based validation due to data limitations)
+- Performance evaluated on held-out test set
+- Feature importance analysis performed
 
 ## Implementation Requirements
 - Python 3.8+
-- scikit-learn 1.0+
-- Daily data pipeline
-- Real-time scoring API
-- Monitoring dashboard
+- Required packages:
+  * pandas
+  * numpy
+  * scikit-learn
+  * matplotlib
+  * seaborn
 
-## Regulatory Considerations
-- Fair lending compliance
-- Model risk management guidelines
-- FCRA requirements
-- ECOA compliance
-- Adverse action notice requirements
+## Usage Notes
+1. Data Preprocessing:
+   - Apply same transformations as training
+   - Use saved scaler for numeric features
+   - Maintain same one-hot encoding structure
 
-## Next Steps
-1. Complete documentation package
-2. Independent validation
-3. Production implementation plan
-4. Monitoring setup
-5. Training for business users
+2. Model Input:
+   - Expects features in same order as training
+   - Numeric features must be scaled
+   - Categorical features must be one-hot encoded
+
+3. Model Output:
+   - Probability of default (0-1)
+   - Binary prediction (Default/Non-Default)
+
+## Limitations
+1. Small sample size (300 records)
+2. Limited to approved loans only
+3. No temporal validation due to data constraints
+4. Binary classification may oversimplify risk
+5. Limited feature set compared to full lending data
+
+## Future Improvements
+1. Increase training data size
+2. Add additional relevant features
+3. Implement temporal validation
+4. Consider ordinal encoding for grades
+5. Explore model interpretability tools
+
+## Version Information
+- Model Version: 1.0
+- Last Updated: February 2025
+- Status: Development
